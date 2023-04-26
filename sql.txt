@@ -1,0 +1,4 @@
+create table resident (name varchar(30) unique not null,
+                        phoneNumber varchar(30) unique,
+                        paypal varchar(50) null,
+                        id integer primary key autoincrement);

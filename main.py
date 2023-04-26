@@ -1,18 +1,12 @@
 import json
 import sys
 from functools import reduce
+import sqlite3
+from os.path import exists
 
 from PIL import ImageGrab
 from PIL import Image
-from dataclasses import dataclass
 
-
-def json2Resident(jsonDict):
-    try:
-        return Resident(jsonDict["name"], jsonDict["phone"], jsonDict["paypal"])
-    except KeyError:
-        print("Fehler beim Parsen der JSON Daten!\n")
-        return
 
 
 class Resident:
@@ -29,17 +23,18 @@ class Resident:
         return f"(Name={self.name}, Telefon={self.phone}, PayPal={self.paypal})"
 
 
+def initDatabase():
+    if not exists("data.db"):
+        open("data.db")
+
 def loadResidents():
     fd = open("residents.json")
     return json.load(fd, object_hook=json2Resident)
 
 
 def addResident(resident):
-    residents = loadResidents()
-    residents.append(resident)
-    jsonString = json.dumps(list(map(lambda r: r.__dict__, residents)))
-    fd = open("residents.json", "w")
-    fd.write(jsonString)
+    cursor.execute("INSERT INTO resident VALUES(?,?,?)", resident.name, resident.phone, resident.paypal)
+    connection.commit()
 
 
 def fetchImage():
@@ -72,6 +67,8 @@ def main():
     for i in range(len(residents)):
         print(f"{i}: {residents[i]}")
     index = input("Nummer: ")
+
+
 
 
 
