@@ -7,14 +7,18 @@ from os.path import exists
 from PIL import ImageGrab
 from PIL import Image
 
+connection = None
+cursor = None
 
 
 class Resident:
+    rID: int
     name: str
     phone: str
     paypal: str
 
-    def __init__(self, name=None, phone=None, paypal=None):
+    def __init__(self, rID, name=None, phone=None, paypal=None):
+        self.rID = rID
         self.name = name if name != "" else None
         self.phone = phone if phone != "" else None
         self.paypal = paypal if paypal != "" else None
@@ -24,16 +28,31 @@ class Resident:
 
 
 def initDatabase():
+    create = False
     if not exists("data.db"):
-        open("data.db")
+        create = True
+    global connection, cursor
+    connection = sqlite3.connect("data.db")
+    cursor = connection.cursor()
+    if create:
+        fd = open("data.ddl")
+        ddl = reduce(lambda s1, s2: s1 + s2, fd.readlines(), "")
+        fd.close()
+        connection.executescript(ddl)
+
 
 def loadResidents():
-    fd = open("residents.json")
-    return json.load(fd, object_hook=json2Resident)
+    res = cursor.execute("SELECT * FROM resident")
+    residents = []
+    resTuple = res.fetchone()
+    while resTuple is not None:
+        residents.append(Resident(*resTuple))
+        resTuple = res.fetchone()
+    return residents
 
 
 def addResident(resident):
-    cursor.execute("INSERT INTO resident VALUES(?,?,?)", resident.name, resident.phone, resident.paypal)
+    cursor.execute("INSERT INTO resident VALUES(NULL,?,?,?)", [resident.name, resident.phone, resident.paypal])
     connection.commit()
 
 
@@ -51,7 +70,10 @@ def fetchImage():
     return im
 
 
-def addRoutine():
+def addBill(rID, amount):
+#TODO continue here
+
+def inputAddRoutine():
     name = input("Name: ")
     phone = input("Phone: ")
     paypal = input("PayPal: ")
@@ -59,17 +81,15 @@ def addRoutine():
 
 
 def main():
+    initDatabase()
     if "add" in (reduce(lambda a1, a2: a1 + a2, sys.argv[1:], "")):
-        addRoutine()
+        inputAddRoutine()
         exit(0)
     residents = loadResidents()
-    print("Bewohner angeben...\n")
-    for i in range(len(residents)):
-        print(f"{i}: {residents[i]}")
-    index = input("Nummer: ")
-
-
-
+    for r in residents:
+        print(f"{r.rID}: {r}")
+    index = input("\nBewohner Nummer eingeben: ")
+    amount = input("Betrag eingeben: ")
 
 
 if __name__ == "__main__":
