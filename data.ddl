@@ -10,6 +10,7 @@ id integer primary key autoincrement,
 buyer_id integer not null references resident on delete set null,
 amount float not null,
 status varchar(10) not null default 'REGISTERED',
+transaction_details varchar(64) null,
 added timestamp default current_timestamp,
-check(status = 'REGISTERED' or status = 'REPAID' or status = 'REFUNDED')
-);
+check(status = 'REGISTERED' and transaction_details is NULL or status = 'REPAID' or status = 'REFUNDED')
+);;

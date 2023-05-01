@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from functools import reduce
 import sqlite3
@@ -41,6 +42,10 @@ def initDatabase():
         connection.executescript(ddl)
 
 
+def initFileStructure():
+    if not exists("bills"):
+        os.mkdir("bills")
+
 def loadResidents():
     res = cursor.execute("SELECT * FROM resident")
     residents = []
@@ -71,7 +76,11 @@ def fetchImage():
 
 
 def addBill(rID, amount):
-#TODO continue here
+    cursor.execute("INSERT INTO bills(buyer_id, amount) VALUES(?,?);", [rID, amount])
+    connection.commit()
+    res = cursor.execute("SELECT last_insert_rowid() FROM bills;")
+    bill_id = res.fetchone()[0]
+    return bill_id
 
 def inputAddRoutine():
     name = input("Name: ")
@@ -80,16 +89,38 @@ def inputAddRoutine():
     addResident(Resident(name, phone, paypal))
 
 
-def main():
-    initDatabase()
-    if "add" in (reduce(lambda a1, a2: a1 + a2, sys.argv[1:], "")):
-        inputAddRoutine()
-        exit(0)
+def registerBill():
     residents = loadResidents()
     for r in residents:
         print(f"{r.rID}: {r}")
     index = input("\nBewohner Nummer eingeben: ")
     amount = input("Betrag eingeben: ")
+    image = fetchImage()
+    bill_id = addBill(index, amount)
+    image.save(f"bills/{bill_id}.jpg")
+
+
+def responseToBool(rep):
+    rep = rep.lower()
+    if "n" in rep or len(rep) == 0:
+        return False
+    return True
+
+
+def main():
+    initDatabase()
+    initFileStructure()
+    if "add" in (reduce(lambda a1, a2: a1 + a2, sys.argv[1:], "")):
+        inputAddRoutine()
+        return
+
+    register_bill = responseToBool(input("Wollen Sie einen neuen Beleg hinzufügen?"))
+    if register_bill:
+        registerBill()
+        return
+
+    lend_money = responseToBool(input("Wollen Sie Geld auslegen?"))
+    # TODO continue here
 
 
 if __name__ == "__main__":
