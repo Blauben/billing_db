@@ -46,6 +46,7 @@ def initFileStructure():
     if not exists("bills"):
         os.mkdir("bills")
 
+
 def loadResidents():
     res = cursor.execute("SELECT * FROM resident")
     residents = []
@@ -82,6 +83,7 @@ def addBill(rID, amount):
     bill_id = res.fetchone()[0]
     return bill_id
 
+
 def inputAddRoutine():
     name = input("Name: ")
     phone = input("Phone: ")
@@ -89,15 +91,26 @@ def inputAddRoutine():
     addResident(Resident(name, phone, paypal))
 
 
-def registerBill():
+def printResidents():
     residents = loadResidents()
     for r in residents:
         print(f"{r.rID}: {r}")
+
+
+def registerBill():
+    printResidents()
     index = input("\nBewohner Nummer eingeben: ")
     amount = input("Betrag eingeben: ")
     image = fetchImage()
     bill_id = addBill(index, amount)
     image.save(f"bills/{bill_id}.jpg")
+
+
+def lendMoney():
+    res = cursor.execute("SELECT * FROM bills b, resident r WHERE b.status = 'REGISTERED' AND b.buyer_id = r.id")
+    bills = res.fetchall()
+    for bill in bills:
+        print(f"{bill}\n")
 
 
 def responseToBool(rep):
@@ -120,7 +133,9 @@ def main():
         return
 
     lend_money = responseToBool(input("Wollen Sie Geld auslegen?"))
-    # TODO continue here
+    if lend_money:
+        lendMoney()
+        return
 
 
 if __name__ == "__main__":
