@@ -1,9 +1,9 @@
-import json
 import os
 import sys
 from functools import reduce
 import sqlite3
 from os.path import exists
+from prettytable import PrettyTable
 
 from PIL import ImageGrab
 from PIL import Image
@@ -26,6 +26,9 @@ class Resident:
 
     def __str__(self):
         return f"(Name={self.name}, Telefon={self.phone}, PayPal={self.paypal})"
+
+    def tuple(self):
+        return self.rID, self.name, self.phone, self.paypal
 
 
 def initDatabase():
@@ -93,8 +96,8 @@ def inputAddRoutine():
 
 def printResidents():
     residents = loadResidents()
-    for r in residents:
-        print(f"{r.rID}: {r}")
+    residentData = list(map(lambda r: r.tuple(), residents))
+    printTable(data=residentData, column_names=["Bewohnernummer", "Name", "Telefon", "PayPal"])
 
 
 def registerBill():
@@ -107,10 +110,22 @@ def registerBill():
 
 
 def lendMoney():
-    res = cursor.execute("SELECT * FROM bills b, resident r WHERE b.status = 'REGISTERED' AND b.buyer_id = r.id")
+    res = cursor.execute(
+        "SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b, resident r WHERE b.status = 'REGISTERED' AND r.id = b.buyer_id;")
     bills = res.fetchall()
-    for bill in bills:
-        print(f"{bill}\n")
+    printTable(data=bills, column_names=["Name", "Telefon", "PayPal", "Belegnummer", "Preis", "Datum"])
+    bID=input("\nZahle Beleg mit Nummer: ")
+    details = input("Transaktionsdetails: ")
+    cursor.execute("UPDATE bills SET status = 'REPAID', transaction_details = ? where id = ?;", [details, bID])
+    connection.commit()
+
+
+def printTable(data, column_names):
+    table = PrettyTable()
+    table.field_names = column_names
+    for entry in data:
+        table.add_row([*entry])
+    print(table)
 
 
 def responseToBool(rep):
