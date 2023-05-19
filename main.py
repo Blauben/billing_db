@@ -91,7 +91,7 @@ def inputAddRoutine():
     name = input("Name: ")
     phone = input("Phone: ")
     paypal = input("PayPal: ")
-    addResident(Resident(name, phone, paypal))
+    addResident(Resident(-1, name, phone, paypal))
 
 
 def printResidents():
