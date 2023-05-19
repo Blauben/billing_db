@@ -113,6 +113,9 @@ def lendMoney():
     res = cursor.execute(
         "SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b, resident r WHERE b.status = 'REGISTERED' AND r.id = b.buyer_id;")
     bills = res.fetchall()
+    if len(bills) == 0:
+        print("Keine Belege registriert!\n")
+        return
     printTable(data=bills, column_names=["Name", "Telefon", "PayPal", "Belegnummer", "Preis", "Datum"])
     bID=input("\nZahle Beleg mit Nummer: ")
     details = input("Transaktionsdetails: ")
@@ -134,6 +137,9 @@ def responseToBool(rep):
         return False
     return True
 
+def recollectMoney():
+    pass
+
 
 def main():
     initDatabase()
@@ -151,6 +157,10 @@ def main():
     if lend_money:
         lendMoney()
         return
+
+    recollect_money = responseToBool(input("Wollen Sie abrechnen?"))
+    if recollect_money:
+        recollectMoney()
 
 
 if __name__ == "__main__":

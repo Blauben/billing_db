@@ -1,2 +1,0 @@
-insert into resident values(NULL,'Ben','+49', 'email');
-insert into bills values(NULL,(select id from resident where name='Ben'), 0.00, NULL, NULL);
