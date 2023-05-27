@@ -1,3 +1,5 @@
 *.db
 bills/
 .idea/
+__pycache__/
+venv/
