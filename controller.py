@@ -200,3 +200,9 @@ def settleAccounts():
     cursor.execute("UPDATE bills SET status = 'PROCESSED'")
     connection.commit()
     finish_current_period()
+
+
+def pay():
+    print_payments(only_pending=True)
+    id = input("Payment ID?: ")
+    cursor.execute("UPDATE payments SET status = 'PAID' WHERE id = ?", [id])

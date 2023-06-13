@@ -5,6 +5,7 @@ def print_help():
     help_str = """
     add_user - Fügt einen neuen Benutzer hinzu
     exit - Beende das Skript
+    pay - Pay money or collect money
     print_all_bills - Gebe alle Belege aus
     print_all_payments - Gebe alle Zahlungen aus
     print_pending_bills - Gebe alle unbeglichenen Belege aus
@@ -40,5 +41,7 @@ def run():
             print_bills(only_pending=True)
         elif "print_users" in command:
             printResidents()
+        elif "pay" in command:
+            pay()
         else:
             print(f"Unbekannter Befehl \"{command}\". Geben Sie \"help\" für eine Liste von Befehlen ein.\n")
