@@ -31,4 +31,11 @@ create table accounting_periods (
     end timestamp null
 );
 
-insert into accounting_periods(number) VALUES(1);
+insert into accounting_periods VALUES(0,current_timestamp, current_timestamp),(1,NULL, NULL);
+
+create table budget (
+    balance float not null,
+    check (not balance < 0.0)
+);
+
+insert into budget(balance) VALUES(0.0);

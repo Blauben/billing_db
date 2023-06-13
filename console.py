@@ -4,10 +4,13 @@ from controller import *
 def print_help():
     help_str = """
     add_user - Fügt einen neuen Benutzer hinzu
+    budget_pay - Zahle Bills mit Budget
+    charge_budget - Lädt Budget auf
     exit - Beende das Skript
     pay - Pay money or collect money
     print_all_bills - Gebe alle Belege aus
     print_all_payments - Gebe alle Zahlungen aus
+    print_budget - Gebe Budget aus
     print_pending_bills - Gebe alle unbeglichenen Belege aus
     print_pending_payments - Gebe alle austehenden Zahlungen aus
     print_users - Gebe alle Benutzer aus
@@ -45,5 +48,11 @@ def run():
             printResidents()
         elif "pay" == command or "p" == command:
             pay()
+        elif "charge_budget" == command or "cb" == command:
+            charge_budget()
+        elif "print_budget" == command or "pb" == command:
+            print_budget()
+        elif "budget_pay" == command or "bp" == command:
+            budget_pay()
         else:
             print(f"Unbekannter Befehl \"{command}\". Geben Sie \"help\" für eine Liste von Befehlen ein.\n")

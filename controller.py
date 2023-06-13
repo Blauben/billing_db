@@ -147,7 +147,7 @@ def print_payments(only_pending):
         print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs "
               "Meeting!\n")
         return 0
-    printTable(data=payments, column_names=["Name", "Telefon", "PayPal", "Payment ID","Preis"])
+    printTable(data=payments, column_names=["Name", "Telefon", "PayPal", "Payment ID", "Preis"])
     return len(payments)
 
 
@@ -160,7 +160,7 @@ def printTable(data, column_names):
 
 
 def fetch_pending_bills():
-    query = "SELECT r.id, b.amount FROM bills b, resident r WHERE r.id = b.buyer_id AND b.status = 'REGISTERED';"
+    query = "SELECT r.id, b.amount, b.id FROM bills b, resident r WHERE r.id = b.buyer_id AND b.status = 'REGISTERED';"
     res = cursor.execute(query)
     return res.fetchall()
 
@@ -210,5 +210,42 @@ def pay():
     ids = id_string.split(" ")
     for id_ in ids:
         details = input(f"Transaktionsdetails für PaymentID {id_}?:\n")
-        cursor.execute("UPDATE payments SET status = 'PAID', transaction_details = ? WHERE id = ?", [details,id_])
+        cursor.execute("UPDATE payments SET status = 'PAID', transaction_details = ? WHERE id = ?", [details, id_])
     connection.commit()
+
+
+def charge_budget():
+    charge = input("Budget Aufladung?: ")
+    print("\n")
+    res = cursor.execute("SELECT balance FROM budget")
+    current = res.fetchone()[0]
+    current = current + float(charge)
+    cursor.execute("UPDATE budget set balance = ?", [current])
+    connection.commit()
+
+
+def fetch_budget():
+    res = cursor.execute("SELECT balance FROM budget")
+    return res.fetchone()[0]
+
+
+def print_budget():
+    print(f"Budget: {fetch_budget()}\n")
+
+
+def budget_pay():
+    changes = False
+    bills = fetch_pending_bills()
+    for bill in bills:
+        budget = fetch_budget()
+        if bill[1] > budget:
+            continue
+        else:
+            changes = True
+            cursor.execute("UPDATE budget set balance = ?", [budget - bill[1]])
+            cursor.execute("UPDATE bills SET status = 'PROCESSED' WHERE id = ?", [bill[2]])
+            cursor.execute("INSERT INTO payments(resident_id, accounting_period, amount) VALUES(?,0,?)",
+                           [bill[0], bill[1]])
+            connection.commit()
+    if changes:
+        print("ZAHLUNGEN ERFOLGREICH HINZUGEFÜGT")
