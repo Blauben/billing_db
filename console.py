@@ -5,9 +5,10 @@ def print_help():
     help_str = """
     add_user - Fügt einen neuen Benutzer hinzu
     exit - Beende das Skript
-    payout_bill - Zahle Geld an einen Bewohner aus
     print_all_bills - Gebe alle Belege aus
+    print_all_payments - Gebe alle Zahlungen aus
     print_pending_bills - Gebe alle unbeglichenen Belege aus
+    print_pending_payments - Gebe alle austehenden Zahlungen aus
     print_users - Gebe alle Benutzer aus
     register_bill - Fügt einen neuen Beleg hinzu
     settle_accounts - Berechne Ausgleichszahlungen
@@ -27,8 +28,10 @@ def run():
             addUser()
         elif "register_bill" in command:
             registerBill()
-        elif "payout_bill" in command:
-            payoutBill()
+        elif "print_pending_payments" in command:
+            print_payments(only_pending=True)
+        elif "print_all_payments" in command:
+            print_payments(only_pending=False)
         elif "settle_accounts" in command:
             settleAccounts()
         elif "print_all_bills" in command:

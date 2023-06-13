@@ -1,5 +1,4 @@
 import os
-import sys
 from functools import reduce
 import sqlite3
 from os.path import exists
@@ -51,13 +50,25 @@ def initFileStructure():
 
 
 def loadResidents():
-    res = cursor.execute("SELECT * FROM resident")
+    res = cursor.execute("SELECT * FROM resident;")
     residents = []
     resTuple = res.fetchone()
     while resTuple is not None:
         residents.append(Resident(*resTuple))
         resTuple = res.fetchone()
     return residents
+
+
+def fetch_current_period():
+    res = cursor.execute("SELECT MAX(number) FROM accounting_periods;")
+    return res.fetchone()[0]
+
+
+def finish_current_period():
+    period = fetch_current_period()
+    cursor.execute("UPDATE accounting_periods SET end = current_timestamp WHERE number = ?;", [period])
+    cursor.execute("INSERT INTO accounting_periods VALUES(?)", [period + 1])
+    connection.commit()
 
 
 def addResidentToDB(resident):
@@ -80,7 +91,8 @@ def fetchImage():
 
 
 def addBill(rID, amount):
-    cursor.execute("INSERT INTO bills(buyer_id, amount) VALUES(?,?);", [rID, amount])
+    cursor.execute("INSERT INTO bills(buyer_id, amount, accounting_period) VALUES(?,?,?);",
+                   [rID, amount, fetch_current_period()])
     connection.commit()
     res = cursor.execute("SELECT last_insert_rowid() FROM bills;")
     bill_id = res.fetchone()[0]
@@ -111,16 +123,9 @@ def registerBill():
     print("ERFOLGREICH\n")
 
 
-def payoutBill():
-    print_bills(only_pending=True)
-    bID = input("\nZahle Beleg mit Nummer: ")
-    details = input("Transaktionsdetails: ")
-    cursor.execute("UPDATE bills SET status = 'REPAID', transaction_details = ? where id = ?;", [details, bID])
-    connection.commit()
-
-
 def print_bills(only_pending):
-    query = "SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b, resident r WHERE r.id = b.buyer_id;"
+    query = "SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b, " \
+            "resident r WHERE r.id = b.buyer_id;"
     if only_pending:
         query = f"{query[:-1]} AND b.status = 'REGISTERED';"
     res = cursor.execute(query)
@@ -131,6 +136,20 @@ def print_bills(only_pending):
     printTable(data=bills, column_names=["Name", "Telefon", "PayPal", "Belegnummer", "Preis", "Datum"])
 
 
+def print_payments(only_pending):
+    query = "SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'), p.amount FROM resident r, payments p WHERE " \
+            "r.id = p.resident_id;"
+    if only_pending:
+        query = f"{query[:-1]} AND p.status = 'PENDING';"
+    res = cursor.execute(query)
+    payments = res.fetchall()
+    if len(payments) == 0:
+        print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs "
+              "Meeting!\n")
+        return
+    printTable(data=payments, column_names=["Name", "Telefon", "PayPal", "Preis"])
+
+
 def printTable(data, column_names):
     table = PrettyTable()
     table.field_names = column_names
@@ -139,12 +158,44 @@ def printTable(data, column_names):
     print(table)
 
 
-def responseToBool(rep):
-    rep = rep.lower()
-    if "n" in rep or len(rep) == 0:
-        return False
-    return True
+def fetch_pending_bills():
+    query = "SELECT r.id, b.amount FROM bills b, resident r WHERE r.id = b.buyer_id AND b.status = 'REGISTERED';"
+    res = cursor.execute(query)
+    return res.fetchall()
+
+
+def calculate_resident_expenses():
+    bills = fetch_pending_bills()
+    resident_expenses = {}
+    for bill in bills:
+        total = total + bill[1]
+        if bill[0] in resident_expenses.keys():
+            prev = resident_expenses[bill[0]]
+            bill[1] = prev + bill[1]
+            resident_expenses.update(bill)
+        else:
+            resident_expenses[bill[0]] = bill[1]
+    return total, resident_expenses
 
 
 def settleAccounts():
-    pass
+    period = fetch_current_period()
+    residents = loadResidents()
+    total, resident_expenses = calculate_resident_expenses()
+
+    default_share = round(total / len(residents), 2)
+
+    for resident in residents:
+        try:
+            expenses = resident_expenses[resident.rID]
+        except KeyError:
+            expenses = 0.0
+
+        amount = expenses - default_share
+        if amount == 0.0:
+            continue
+        query = "INSERT INTO payments(resident_id,accounting_period,amount) VALUES(?,?)"
+        cursor.execute(query, [resident.rID, period, amount])
+    cursor.execute("UPDATE bills SET status = 'PROCESSED'")
+    connection.commit()
+    finish_current_period()
