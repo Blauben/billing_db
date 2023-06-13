@@ -67,7 +67,7 @@ def fetch_current_period():
 def finish_current_period():
     period = fetch_current_period()
     cursor.execute("UPDATE accounting_periods SET end = current_timestamp WHERE number = ?;", [period])
-    cursor.execute("INSERT INTO accounting_periods VALUES(?)", [period + 1])
+    cursor.execute("INSERT INTO accounting_periods(number) VALUES(?)", [period + 1])
     connection.commit()
 
 
@@ -167,12 +167,13 @@ def fetch_pending_bills():
 def calculate_resident_expenses():
     bills = fetch_pending_bills()
     resident_expenses = {}
+    total = 0.0
     for bill in bills:
         total = total + bill[1]
         if bill[0] in resident_expenses.keys():
             prev = resident_expenses[bill[0]]
-            bill[1] = prev + bill[1]
-            resident_expenses.update(bill)
+            after = prev + bill[1]
+            resident_expenses.update({bill[0]: after})
         else:
             resident_expenses[bill[0]] = bill[1]
     return total, resident_expenses
@@ -194,7 +195,7 @@ def settleAccounts():
         amount = expenses - default_share
         if amount == 0.0:
             continue
-        query = "INSERT INTO payments(resident_id,accounting_period,amount) VALUES(?,?)"
+        query = "INSERT INTO payments(resident_id,accounting_period,amount) VALUES(?,?,?)"
         cursor.execute(query, [resident.rID, period, amount])
     cursor.execute("UPDATE bills SET status = 'PROCESSED'")
     connection.commit()
