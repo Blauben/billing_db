@@ -137,8 +137,8 @@ def print_bills(only_pending):
 
 
 def print_payments(only_pending):
-    query = "SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'), p.amount FROM resident r, payments p WHERE " \
-            "r.id = p.resident_id;"
+    query = "SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'),p.id, p.amount FROM resident r, payments p WHERE\
+      r.id = p.resident_id;"
     if only_pending:
         query = f"{query[:-1]} AND p.status = 'PENDING';"
     res = cursor.execute(query)
@@ -146,8 +146,9 @@ def print_payments(only_pending):
     if len(payments) == 0:
         print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs "
               "Meeting!\n")
-        return
-    printTable(data=payments, column_names=["Name", "Telefon", "PayPal", "Preis"])
+        return 0
+    printTable(data=payments, column_names=["Name", "Telefon", "PayPal", "Payment ID","Preis"])
+    return len(payments)
 
 
 def printTable(data, column_names):
@@ -203,9 +204,11 @@ def settleAccounts():
 
 
 def pay():
-    print_payments(only_pending=True)
+    if print_payments(only_pending=True) == 0:
+        return
     id_string = input("Payment ID?: ")
     ids = id_string.split(" ")
     for id_ in ids:
-        cursor.execute("UPDATE payments SET status = 'PAID' WHERE id = ?", [id_])
+        details = input(f"Transaktionsdetails für PaymentID {id_}?:\n")
+        cursor.execute("UPDATE payments SET status = 'PAID', transaction_details = ? WHERE id = ?", [details,id_])
     connection.commit()
