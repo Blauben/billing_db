@@ -13,6 +13,8 @@ def print_help():
     print_users - Gebe alle Benutzer aus
     register_bill - Fügt einen neuen Beleg hinzu
     settle_accounts - Berechne Ausgleichszahlungen
+    
+    Kurzformen (Anfangsbuchstaben) sind erlaubt.
     """
     print(help_str)
 
@@ -21,27 +23,27 @@ def run():
     print_help()
     while True:
         command = input("> ")
-        if "exit" in command:
+        if "exit" == command:
             break
-        elif "help" in command:
+        elif "help" == command:
             print_help()
-        elif "add_user" in command:
+        elif "add_user" == command or "au" == command:
             addUser()
-        elif "register_bill" in command:
+        elif "register_bill" == command or "rb" == command:
             registerBill()
-        elif "print_pending_payments" in command:
+        elif "print_pending_payments" == command or "ppp" == command:
             print_payments(only_pending=True)
-        elif "print_all_payments" in command:
+        elif "print_all_payments" == command or "pap" == command:
             print_payments(only_pending=False)
-        elif "settle_accounts" in command:
+        elif "settle_accounts" == command or "sa" == command:
             settleAccounts()
-        elif "print_all_bills" in command:
+        elif "print_all_bills" == command or "pab" == command:
             print_bills(only_pending=False)
-        elif "print_pending_bills" in command:
+        elif "print_pending_bills" == command or "ppb" == command:
             print_bills(only_pending=True)
-        elif "print_users" in command:
+        elif "print_users" == command or "pu" == command:
             printResidents()
-        elif "pay" in command:
+        elif "pay" == command or "p" == command:
             pay()
         else:
             print(f"Unbekannter Befehl \"{command}\". Geben Sie \"help\" für eine Liste von Befehlen ein.\n")

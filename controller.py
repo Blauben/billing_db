@@ -204,5 +204,8 @@ def settleAccounts():
 
 def pay():
     print_payments(only_pending=True)
-    id = input("Payment ID?: ")
-    cursor.execute("UPDATE payments SET status = 'PAID' WHERE id = ?", [id])
+    id_string = input("Payment ID?: ")
+    ids = id_string.split(" ")
+    for id_ in ids:
+        cursor.execute("UPDATE payments SET status = 'PAID' WHERE id = ?", [id_])
+    connection.commit()
