@@ -137,7 +137,7 @@ def print_bills(only_pending):
 
 
 def print_payments(only_pending):
-    query = "SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'),p.id, p.amount FROM resident r, payments p WHERE\
+    query = "SELECT r.name, p.id, r.phoneNumber, COALESCE(r.paypal, 'None'), p.amount FROM resident r, payments p WHERE\
       r.id = p.resident_id;"
     if only_pending:
         query = f"{query[:-1]} AND p.status = 'PENDING';"
@@ -147,7 +147,7 @@ def print_payments(only_pending):
         print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs "
               "Meeting!\n")
         return 0
-    printTable(data=payments, column_names=["Name", "Telefon", "PayPal", "Payment ID", "Preis"])
+    printTable(data=payments, column_names=["Name", "Payment ID","Telefon", "PayPal", "Preis"])
     return len(payments)
 
 
