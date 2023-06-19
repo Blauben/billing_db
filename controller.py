@@ -171,13 +171,18 @@ def calculate_resident_expenses():
     total = 0.0
     for bill in bills:
         total = total + bill[1]
-        if bill[0] in resident_expenses.keys():
-            prev = resident_expenses[bill[0]]
-            after = prev + bill[1]
-            resident_expenses.update({bill[0]: after})
-        else:
-            resident_expenses[bill[0]] = bill[1]
+        resident_expenses = insert_addto_map(resident_expenses, bill[0], bill[1])
     return total, resident_expenses
+
+
+def insert_addto_map(map, key, value):
+    if key in map.keys():
+        prev = map[key]
+        after = prev + value
+        map.update({key: after})
+    else:
+        map[key] = value
+    return map
 
 
 def settleAccounts():
@@ -215,12 +220,17 @@ def pay():
 
 
 def charge_budget():
-    charge = input("Budget Aufladung?: ")
+    charge = float(input("Budget Aufladung?: "))
     print("\n")
+    residents = loadResidents()
     res = cursor.execute("SELECT balance FROM budget")
     current = res.fetchone()[0]
-    current = current + float(charge)
+    current = current + charge
     cursor.execute("UPDATE budget set balance = ?", [current])
+
+    share = charge / len(residents)
+    for resident in residents:
+        cursor.execute("INSERT INTO payments(resident_id, accounting_period, amount) VALUES(?,?,?)", [resident.rID, 0, share * -1])
     connection.commit()
 
 
@@ -235,6 +245,7 @@ def print_budget():
 
 def budget_pay():
     changes = False
+    resident_expenses = {}
     bills = fetch_pending_bills()
     for bill in bills:
         budget = fetch_budget()
@@ -244,8 +255,12 @@ def budget_pay():
             changes = True
             cursor.execute("UPDATE budget set balance = ?", [budget - bill[1]])
             cursor.execute("UPDATE bills SET status = 'PROCESSED' WHERE id = ?", [bill[2]])
-            cursor.execute("INSERT INTO payments(resident_id, accounting_period, amount) VALUES(?,0,?)",
-                           [bill[0], bill[1]])
+            resident_expenses = insert_addto_map(resident_expenses, bill[0], bill[1])
             connection.commit()
+    for rid, amount in resident_expenses.items():
+        cursor.execute("INSERT INTO payments(resident_id, accounting_period, amount) VALUES(?,0,?);",
+                       [rid, amount])
+        connection.commit()
+
     if changes:
         print("ZAHLUNGEN ERFOLGREICH HINZUGEFÜGT")
