@@ -216,7 +216,9 @@ def pay():
     id_string = input("Payment ID?: ")
     ids = id_string.split(" ")
     for id_ in ids:
-        details = input(f"Transaktionsdetails für PaymentID {id_}?:\n")
+        details = input(f"Transaktionsdetails für PaymentID {id_}?: (Drücke nur ENTER zum Abbrechen)\n")
+        if details == "":
+            continue
         cursor.execute("UPDATE payments SET status = 'PAID', transaction_details = ? WHERE id = ?", [details, id_])
     connection.commit()
 
@@ -232,7 +234,8 @@ def charge_budget():
 
     share = charge / len(residents)
     for resident in residents:
-        cursor.execute("INSERT INTO payments(resident_id, accounting_period, amount) VALUES(?,?,?)", [resident.rID, 0, share * -1])
+        cursor.execute("INSERT INTO payments(resident_id, accounting_period, amount) VALUES(?,?,?)",
+                       [resident.rID, 0, share * -1])
     connection.commit()
 
 
