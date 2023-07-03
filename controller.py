@@ -83,10 +83,13 @@ def fetchImage():
         imPathList = ImageGrab.grabclipboard()
         if imPathList is None or len(imPathList) == 0:
             input("Beleg kopieren... ENTER um fortzufahren")
-        else:
+            continue
+        imPath = imPathList[0]
+        try:
+            im = Image.open(imPath)
             pictureFound = True
-            imPath = imPathList[0]
-    im = Image.open(imPath)
+        except Exception:
+            print("Error copying image from clipboard")
     return im
 
 
