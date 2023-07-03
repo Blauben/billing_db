@@ -79,10 +79,11 @@ def addResidentToDB(resident):
 def fetchImage():
     pictureFound = False
     imPath = ""
+    imPathList = []
     while not pictureFound:
+        input("Beleg kopieren... ENTER um fortzufahren")
         imPathList = ImageGrab.grabclipboard()
         if imPathList is None or len(imPathList) == 0:
-            input("Beleg kopieren... ENTER um fortzufahren")
             continue
         imPath = imPathList[0]
         try:
