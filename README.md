@@ -1,1 +1,2 @@
+
 Kleines Python Skript zum Verwalten von Ein und Ausgaben ausgelegt auf Wohngemeinschaften. Erlaubt das Registrieren von Ausgaben, Aufteilen von Kosten unter den Bewohnern und das Speichern vergangener Zahlungen.

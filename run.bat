@@ -1,1 +1,4 @@
-venv\Scripts\python.exe main.py
+git checkout master
+git pull
+cls
+py main.py
