@@ -6,8 +6,9 @@ def print_help():
     add_user - Fügt einen neuen Benutzer hinzu
     budget_pay - Zahle Bills mit Budget
     charge_budget - Lädt Budget auf
+    delete_user - Löscht einen existierenden Benutzer (Es dürfen keine ausstehenden Zahlungen zu diesem Nutzer mehr bestehen!)
     exit - Beende das Skript
-    pay - Pay money or collect money
+    pay - Zahle oder erhalte Geld
     print_all_bills - Gebe alle Belege aus
     print_all_payments - Gebe alle Zahlungen aus
     print_budget - Gebe Budget aus
@@ -32,6 +33,8 @@ def run():
             print_help()
         elif "add_user" == command or "au" == command:
             addUser()
+        elif "delete_user" == command or "du" == command:
+            deleteUser()
         elif "register_bill" == command or "rb" == command:
             registerBill()
         elif "print_pending_payments" == command or "ppp" == command:

@@ -42,6 +42,8 @@ def initDatabase():
         ddl = reduce(lambda s1, s2: s1 + s2, fd.readlines(), "")
         fd.close()
         connection.executescript(ddl)
+        cursor.execute("pragma foreign_keys = ON")
+        connection.commit()
 
 
 def initFileStructure():
@@ -107,6 +109,13 @@ def addUser():
     print("ERFOLGREICH\n")
 
 
+def deleteUser():
+    printResidents()
+    index = input("\nBewohner Nummer eingeben: ")
+    cursor.execute("DELETE FROM resident WHERE id=3 AND NOT EXISTS (SELECT * FROM payments p WHERE p.status='PENDING' AND p.resident_id = 3);", [index, index])
+    connection.commit()
+
+
 def printResidents():
     residents = loadResidents()
     residentData = list(map(lambda r: r.tuple(), residents))
@@ -124,8 +133,7 @@ def registerBill():
 
 
 def print_bills(only_pending):
-    query = "SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b, " \
-            "resident r WHERE r.id = b.buyer_id;"
+    query = "SELECT COALESCE(r.name, 'Deleted'), COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b LEFT JOIN resident r ON b.buyer_id = r.id;"
     if only_pending:
         query = f"{query[:-1]} AND b.status = 'REGISTERED';"
     res = cursor.execute(query)
@@ -175,14 +183,14 @@ def calculate_resident_expenses():
     return total, resident_expenses
 
 
-def insert_addto_map(map, key, value):
-    if key in map.keys():
-        prev = map[key]
+def insert_addto_map(data_map, key, value):
+    if key in data_map.keys():
+        prev = data_map[key]
         after = prev + value
-        map.update({key: after})
+        data_map.update({key: after})
     else:
-        map[key] = value
-    return map
+        data_map[key] = value
+    return data_map
 
 
 def settleAccounts():

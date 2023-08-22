@@ -8,7 +8,7 @@ paypal varchar(50) null
 create table bills (
 id integer primary key autoincrement,
 accounting_period integer references accounting_periods,
-buyer_id integer not null references resident on delete set null,
+buyer_id integer references resident on delete set null,
 amount float not null,
 status varchar(10) not null default 'REGISTERED',
 added timestamp default current_timestamp,
