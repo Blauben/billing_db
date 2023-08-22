@@ -81,14 +81,18 @@ def addResidentToDB(resident):
 def fetchImage():
     pictureFound = False
     imPath = ""
+    imPathList = []
     while not pictureFound:
+        input("Beleg kopieren... ENTER um fortzufahren")
         imPathList = ImageGrab.grabclipboard()
         if imPathList is None or len(imPathList) == 0:
-            input("Beleg kopieren... ENTER um fortzufahren")
-        else:
+            continue
+        imPath = imPathList[0]
+        try:
+            im = Image.open(imPath)
             pictureFound = True
-            imPath = imPathList[0]
-    im = Image.open(imPath)
+        except Exception:
+            print("Error copying image from clipboard")
     return im
 
 
@@ -133,29 +137,32 @@ def registerBill():
 
 
 def print_bills(only_pending):
-    query = "SELECT COALESCE(r.name, 'Deleted'), COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b LEFT JOIN resident r ON b.buyer_id = r.id;"
-    if only_pending:
-        query = f"{query[:-1]} AND b.status = 'REGISTERED';"
+    registered_condition = " AND b.status = 'REGISTERED'"
+    query = f"SELECT COALESCE(r.name, 'Deleted'), COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b LEFT JOIN resident r ON b.buyer_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     bills = res.fetchall()
     if len(bills) == 0:
         print("Keine Belege registriert!\n")
         return
-    printTable(data=bills, column_names=["Name", "Telefon", "PayPal", "Belegnummer", "Preis", "Datum"])
+    cnames = ["Name", "Telefon", "PayPal", "Belegnummer", "Preis", "Datum"]
+    printTable(data=bills, column_names=cnames)
 
 
 def print_payments(only_pending):
-    query = "SELECT r.name, p.id, r.phoneNumber, COALESCE(r.paypal, 'None'), p.amount FROM resident r, payments p WHERE\
-      r.id = p.resident_id;"
-    if only_pending:
-        query = f"{query[:-1]} AND p.status = 'PENDING';"
+    registered_condition = " AND p.status = 'PENDING'"
+    details_attribute = ", COALESCE(p.transaction_details, 'Unpaid')"
+    query = f"SELECT r.name, p.id, r.phoneNumber, COALESCE(r.paypal, 'None'), p.amount {'' if only_pending else details_attribute}  FROM resident r, payments p WHERE\
+      r.id = p.resident_id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     payments = res.fetchall()
     if len(payments) == 0:
         print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs "
               "Meeting!\n")
         return 0
-    printTable(data=payments, column_names=["Name", "Payment ID", "Telefon", "PayPal", "Preis"])
+    cnames = ["Name", "Payment ID","Telefon", "PayPal", "Preis"]
+    if not only_pending:
+        cnames.append("Transaktions Details")
+    printTable(data=payments, column_names=cnames)
     return len(payments)
 
 
