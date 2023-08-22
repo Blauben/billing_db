@@ -115,8 +115,8 @@ def addUser():
 
 def deleteUser():
     printResidents()
-    index = input("\nBewohner Nummer eingeben: ")
-    cursor.execute("DELETE FROM resident WHERE id=3 AND NOT EXISTS (SELECT * FROM payments p WHERE p.status='PENDING' AND p.resident_id = 3);", [index, index])
+    index = int(input("\nBewohner Nummer eingeben: "))
+    cursor.execute("DELETE FROM resident WHERE id=? AND NOT EXISTS (SELECT * FROM payments p WHERE p.status='PENDING' AND p.resident_id = ?);", [index, index])
     connection.commit()
 
 
@@ -137,7 +137,7 @@ def registerBill():
 
 
 def print_bills(only_pending):
-    registered_condition = " AND b.status = 'REGISTERED'"
+    registered_condition = " WHERE b.status = 'REGISTERED'"
     query = f"SELECT COALESCE(r.name, 'Deleted'), COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b LEFT JOIN resident r ON b.buyer_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     bills = res.fetchall()
@@ -149,10 +149,9 @@ def print_bills(only_pending):
 
 
 def print_payments(only_pending):
-    registered_condition = " AND p.status = 'PENDING'"
+    registered_condition = " WHERE p.status = 'PENDING'"
     details_attribute = ", COALESCE(p.transaction_details, 'Unpaid')"
-    query = f"SELECT r.name, p.id, r.phoneNumber, COALESCE(r.paypal, 'None'), p.amount {'' if only_pending else details_attribute}  FROM resident r, payments p WHERE\
-      r.id = p.resident_id {registered_condition if only_pending else ''};"
+    query = f"SELECT COALESCE(r.name, 'Deleted'), p.id, COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), p.amount {'' if only_pending else details_attribute}  FROM payments p LEFT JOIN resident r ON p.resident_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     payments = res.fetchall()
     if len(payments) == 0:
