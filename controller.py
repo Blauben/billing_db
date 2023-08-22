@@ -42,6 +42,8 @@ def initDatabase():
         ddl = reduce(lambda s1, s2: s1 + s2, fd.readlines(), "")
         fd.close()
         connection.executescript(ddl)
+        cursor.execute("pragma foreign_keys = ON")
+        connection.commit()
 
 
 def initFileStructure():
@@ -111,6 +113,13 @@ def addUser():
     print("ERFOLGREICH\n")
 
 
+def deleteUser():
+    printResidents()
+    index = input("\nBewohner Nummer eingeben: ")
+    cursor.execute("DELETE FROM resident WHERE id=3 AND NOT EXISTS (SELECT * FROM payments p WHERE p.status='PENDING' AND p.resident_id = 3);", [index, index])
+    connection.commit()
+
+
 def printResidents():
     residents = loadResidents()
     residentData = list(map(lambda r: r.tuple(), residents))
@@ -129,7 +138,7 @@ def registerBill():
 
 def print_bills(only_pending):
     registered_condition = " AND b.status = 'REGISTERED'"
-    query = f"SELECT r.name, r.phoneNumber, COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b, resident r WHERE r.id = b.buyer_id{registered_condition if only_pending else ''};"
+    query = f"SELECT COALESCE(r.name, 'Deleted'), COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b LEFT JOIN resident r ON b.buyer_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     bills = res.fetchall()
     if len(bills) == 0:
@@ -142,8 +151,8 @@ def print_bills(only_pending):
 def print_payments(only_pending):
     registered_condition = " AND p.status = 'PENDING'"
     details_attribute = ", COALESCE(p.transaction_details, 'Unpaid')"
-    query = f"SELECT r.name, p.id, r.phoneNumber, COALESCE(r.paypal, 'None'), p.amount{'' if only_pending else details_attribute}  FROM resident r, payments p WHERE\
-      r.id = p.resident_id{registered_condition if only_pending else ''};"
+    query = f"SELECT r.name, p.id, r.phoneNumber, COALESCE(r.paypal, 'None'), p.amount {'' if only_pending else details_attribute}  FROM resident r, payments p WHERE\
+      r.id = p.resident_id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     payments = res.fetchall()
     if len(payments) == 0:
@@ -181,14 +190,14 @@ def calculate_resident_expenses():
     return total, resident_expenses
 
 
-def insert_addto_map(map, key, value):
-    if key in map.keys():
-        prev = map[key]
+def insert_addto_map(data_map, key, value):
+    if key in data_map.keys():
+        prev = data_map[key]
         after = prev + value
-        map.update({key: after})
+        data_map.update({key: after})
     else:
-        map[key] = value
-    return map
+        data_map[key] = value
+    return data_map
 
 
 def settleAccounts():
