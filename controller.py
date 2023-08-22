@@ -115,7 +115,7 @@ def addUser():
 
 def deleteUser():
     printResidents()
-    index = input("\nBewohner Nummer eingeben: ")
+    index = int(input("\nBewohner Nummer eingeben: "))
     cursor.execute("DELETE FROM resident WHERE id=? AND NOT EXISTS (SELECT * FROM payments p WHERE p.status='PENDING' AND p.resident_id = ?);", [index, index])
     connection.commit()
 
