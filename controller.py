@@ -273,8 +273,8 @@ def budget_pay():
             continue
         else:
             changes = True
-            cursor.execute("UPDATE budget set balance = ?", [budget - bill[1]])
-            cursor.execute("UPDATE bills SET status = 'PROCESSED' WHERE id = ?", [bill[2]])
+            cursor.execute("UPDATE budget set balance = ?", [round_half_up(budget - bill[1])])
+            cursor.execute("UPDATE bills SET status = 'PROCESSED' and accounting_period = 0 WHERE id = ?", [bill[2]])
             resident_expenses = insert_addto_map(resident_expenses, bill[0], bill[1])
             connection.commit()
     for rid, amount in resident_expenses.items():
