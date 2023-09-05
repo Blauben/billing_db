@@ -153,8 +153,8 @@ def print_bills(only_pending):
 
 def print_payments(only_pending):
     registered_condition = " WHERE p.status = 'PENDING'"
-    details_attribute = " COALESCE(p.transaction_details, 'Unpaid'),"
-    query = f"SELECT COALESCE(r.name, 'Deleted'), p.id, COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), p.amount, {'' if only_pending else details_attribute} p.accounting_period FROM payments p LEFT JOIN resident r ON p.resident_id = r.id {registered_condition if only_pending else ''};"
+    details_attribute = ", COALESCE(p.transaction_details, 'Unpaid')"
+    query = f"SELECT COALESCE(r.name, 'Deleted'), p.id, COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), p.amount, p.accounting_period {'' if only_pending else details_attribute} FROM payments p LEFT JOIN resident r ON p.resident_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     payments = res.fetchall()
     if len(payments) == 0:
