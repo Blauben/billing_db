@@ -1,3 +1,4 @@
+import math
 import os
 from functools import reduce
 import sqlite3
@@ -116,7 +117,9 @@ def addUser():
 def deleteUser():
     printResidents()
     index = int(input("\nBewohner Nummer eingeben: "))
-    cursor.execute("DELETE FROM resident WHERE id=? AND NOT EXISTS (SELECT * FROM payments p WHERE p.status='PENDING' AND p.resident_id = ?);", [index, index])
+    cursor.execute(
+        "DELETE FROM resident WHERE id=? AND NOT EXISTS (SELECT * FROM payments p WHERE p.status='PENDING' AND p.resident_id = ?);",
+        [index, index])
     connection.commit()
 
 
@@ -138,27 +141,27 @@ def registerBill():
 
 def print_bills(only_pending):
     registered_condition = " WHERE b.status = 'REGISTERED'"
-    query = f"SELECT COALESCE(r.name, 'Deleted'), COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), b.id, b.amount, b.added FROM bills b LEFT JOIN resident r ON b.buyer_id = r.id {registered_condition if only_pending else ''};"
+    query = f"SELECT COALESCE(r.name, 'Deleted'), COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), b.id, b.amount, b.added, b.accounting_period FROM bills b LEFT JOIN resident r ON b.buyer_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     bills = res.fetchall()
     if len(bills) == 0:
         print("Keine Belege registriert!\n")
         return
-    cnames = ["Name", "Telefon", "PayPal", "Belegnummer", "Preis", "Datum"]
+    cnames = ["Name", "Telefon", "PayPal", "Belegnummer", "Preis", "Datum", "Zahlperiode"]
     printTable(data=bills, column_names=cnames)
 
 
 def print_payments(only_pending):
     registered_condition = " WHERE p.status = 'PENDING'"
-    details_attribute = ", COALESCE(p.transaction_details, 'Unpaid')"
-    query = f"SELECT COALESCE(r.name, 'Deleted'), p.id, COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), p.amount {'' if only_pending else details_attribute}  FROM payments p LEFT JOIN resident r ON p.resident_id = r.id {registered_condition if only_pending else ''};"
+    details_attribute = " COALESCE(p.transaction_details, 'Unpaid'),"
+    query = f"SELECT COALESCE(r.name, 'Deleted'), p.id, COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), p.amount, {'' if only_pending else details_attribute} p.accounting_period FROM payments p LEFT JOIN resident r ON p.resident_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     payments = res.fetchall()
     if len(payments) == 0:
         print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs "
               "Meeting!\n")
         return 0
-    cnames = ["Name", "Payment ID","Telefon", "PayPal", "Preis"]
+    cnames = ["Name", "Payment ID", "Telefon", "PayPal", "Preis", "Zahlperiode"]
     if not only_pending:
         cnames.append("Transaktions Details")
     printTable(data=payments, column_names=cnames)
@@ -204,7 +207,7 @@ def settleAccounts():
     residents = loadResidents()
     total, resident_expenses = calculate_resident_expenses()
 
-    default_share = round(total / len(residents), 2)
+    default_share = total / len(residents)
 
     for resident in residents:
         try:
@@ -216,7 +219,7 @@ def settleAccounts():
         if amount == 0.0:
             continue
         query = "INSERT INTO payments(resident_id,accounting_period,amount) VALUES(?,?,?)"
-        cursor.execute(query, [resident.rID, period, amount])
+        cursor.execute(query, [resident.rID, period, round_half_up(amount)])
     cursor.execute("UPDATE bills SET status = 'PROCESSED'")
     connection.commit()
     finish_current_period()
@@ -241,13 +244,13 @@ def charge_budget():
     residents = loadResidents()
     res = cursor.execute("SELECT balance FROM budget")
     current = res.fetchone()[0]
-    current = current + charge
+    current = round_half_up(current + charge)
     cursor.execute("UPDATE budget set balance = ?", [current])
 
     share = charge / len(residents)
     for resident in residents:
         cursor.execute("INSERT INTO payments(resident_id, accounting_period, amount) VALUES(?,?,?)",
-                       [resident.rID, 0, share * -1])
+                       [resident.rID, 0, round_half_up(share * -1)])
     connection.commit()
 
 
@@ -276,8 +279,14 @@ def budget_pay():
             connection.commit()
     for rid, amount in resident_expenses.items():
         cursor.execute("INSERT INTO payments(resident_id, accounting_period, amount) VALUES(?,0,?);",
-                       [rid, amount])
+                       [rid, round_half_up(amount)])
         connection.commit()
 
     if changes:
         print("ZAHLUNGEN ERFOLGREICH HINZUGEFÜGT")
+
+
+def round_half_up(n, decimals=2):
+    sign = abs(n)/n
+    multiplier = 10 ** decimals
+    return math.floor(abs(n) * multiplier + 0.5) / multiplier * sign
