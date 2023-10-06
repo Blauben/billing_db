@@ -86,14 +86,14 @@ def fetchImage():
     while not pictureFound:
         input("Beleg kopieren... ENTER um fortzufahren")
         imPathList = ImageGrab.grabclipboard()
-        if imPathList is None or len(imPathList) == 0:
+        if imPathList is None or isinstance(imPathList, list) and len(imPathList) == 0:
             continue
-        imPath = imPathList[0]
+        imPath = imPathList[0] if isinstance(imPathList, list) else imPathList
         try:
             im = Image.open(imPath)
             pictureFound = True
         except Exception:
-            print("Error copying image from clipboard")
+            return imPath
     return im
 
 
@@ -135,7 +135,7 @@ def registerBill():
     amount = input("Betrag eingeben: ")
     image = fetchImage()
     bill_id = addBill(index, amount)
-    image.save(f"bills/{bill_id}.jpg")
+    image.save(f"bills/{bill_id}.{image.format}")
     print("ERFOLGREICH\n")
 
 
