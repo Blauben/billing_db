@@ -1,4 +1,4 @@
 git checkout master
 git pull
 cls
-py main.py
+.venv\Scripts\python.exe main.py
