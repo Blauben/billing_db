@@ -2,7 +2,7 @@ create table resident (
 id integer primary key autoincrement,
 name varchar(30) not null,
 phoneNumber varchar(30) unique,
-paypal varchar(50) null
+contact varchar(50) null
 );
 
 create table bills (

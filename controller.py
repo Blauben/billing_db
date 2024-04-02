@@ -16,19 +16,19 @@ class Resident:
     rID: int
     name: str
     phone: str
-    paypal: str
+    contact: str
 
-    def __init__(self, rID, name=None, phone=None, paypal=None):
+    def __init__(self, rID, name=None, phone=None, contact=None):
         self.rID = rID
         self.name = name if name != "" else None
         self.phone = phone if phone != "" else None
-        self.paypal = paypal if paypal != "" else None
+        self.contact = contact if contact != "" else None
 
     def __str__(self):
-        return f"(Name={self.name}, Telefon={self.phone}, PayPal={self.paypal})"
+        return f"(Name={self.name}, Telefon={self.phone}, Kontakt={self.contact})"
 
     def tuple(self):
-        return self.rID, self.name, self.phone, self.paypal
+        return self.rID, self.name, self.phone, self.contact
 
 
 def initDatabase():
@@ -75,7 +75,7 @@ def finish_current_period():
 
 
 def addResidentToDB(resident):
-    cursor.execute("INSERT INTO resident VALUES(NULL,?,?,?)", [resident.name, resident.phone, resident.paypal])
+    cursor.execute("INSERT INTO resident VALUES(NULL,?,?,?)", [resident.name, resident.phone, resident.contact])
     connection.commit()
 
 
@@ -108,9 +108,9 @@ def addBill(rID, amount):
 
 def addUser():
     name = input("Name: ")
-    phone = input("Phone: ")
-    paypal = input("PayPal: ")
-    addResidentToDB(Resident(-1, name, phone, paypal))
+    phone = input("Telefon: ")
+    contact = input("Kontakt: ")
+    addResidentToDB(Resident(-1, name, phone, contact))
     print("ERFOLGREICH\n")
 
 
@@ -126,7 +126,7 @@ def deleteUser():
 def printResidents():
     residents = loadResidents()
     residentData = list(map(lambda r: r.tuple(), residents))
-    printTable(data=residentData, column_names=["Bewohnernummer", "Name", "Telefon", "PayPal"])
+    printTable(data=residentData, column_names=["Bewohnernummer", "Name", "Telefon", "Kontakt"])
 
 
 def registerBill():
@@ -141,27 +141,27 @@ def registerBill():
 
 def print_bills(only_pending):
     registered_condition = " WHERE b.status = 'REGISTERED'"
-    query = f"SELECT COALESCE(r.name, 'Deleted'), COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), b.id, b.amount, b.added, b.accounting_period FROM bills b LEFT JOIN resident r ON b.buyer_id = r.id {registered_condition if only_pending else ''};"
+    query = f"SELECT COALESCE(r.name, 'Deleted'), COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.contact, 'None'), b.id, b.amount, b.added, b.accounting_period FROM bills b LEFT JOIN resident r ON b.buyer_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     bills = res.fetchall()
     if len(bills) == 0:
         print("Keine Belege registriert!\n")
         return
-    cnames = ["Name", "Telefon", "PayPal", "Belegnummer", "Preis", "Datum", "Zahlperiode"]
+    cnames = ["Name", "Telefon", "Kontakt", "Belegnummer", "Preis", "Datum", "Zahlperiode"]
     printTable(data=bills, column_names=cnames)
 
 
 def print_payments(only_pending):
     registered_condition = " WHERE p.status = 'PENDING'"
     details_attribute = ", COALESCE(p.transaction_details, 'Unpaid')"
-    query = f"SELECT COALESCE(r.name, 'Deleted'), p.id, COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.paypal, 'None'), p.amount, p.accounting_period {'' if only_pending else details_attribute} FROM payments p LEFT JOIN resident r ON p.resident_id = r.id {registered_condition if only_pending else ''};"
+    query = f"SELECT COALESCE(r.name, 'Deleted'), p.id, COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.contact, 'None'), p.amount, p.accounting_period {'' if only_pending else details_attribute} FROM payments p LEFT JOIN resident r ON p.resident_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     payments = res.fetchall()
     if len(payments) == 0:
         print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs "
               "Meeting!\n")
         return 0
-    cnames = ["Name", "Payment ID", "Telefon", "PayPal", "Preis", "Zahlperiode"]
+    cnames = ["Name", "Payment ID", "Telefon", "Kontakt", "Preis", "Zahlperiode"]
     if not only_pending:
         cnames.append("Transaktions Details")
     printTable(data=payments, column_names=cnames)
