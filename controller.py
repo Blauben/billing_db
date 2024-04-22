@@ -154,14 +154,13 @@ def print_bills(only_pending):
 def print_payments(only_pending):
     registered_condition = " WHERE p.status = 'PENDING'"
     details_attribute = ", COALESCE(p.transaction_details, 'Unpaid')"
-    query = f"SELECT COALESCE(r.name, 'Deleted'), p.id, COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.contact, 'None'), p.amount, p.accounting_period {'' if only_pending else details_attribute} FROM payments p LEFT JOIN resident r ON p.resident_id = r.id {registered_condition if only_pending else ''};"
+    query = f"SELECT COALESCE(r.name, 'Deleted'), p.id, COALESCE(r.phoneNumber, 'Deleted'), COALESCE(r.contact, 'None'), p.amount, p.accounting_period, p.date {'' if only_pending else details_attribute} FROM payments p LEFT JOIN resident r ON p.resident_id = r.id {registered_condition if only_pending else ''};"
     res = cursor.execute(query)
     payments = res.fetchall()
     if len(payments) == 0:
-        print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs "
-              "Meeting!\n")
+        print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs Meeting!\n")
         return 0
-    cnames = ["Name", "Payment ID", "Telefon", "Kontakt", "Preis", "Zahlperiode"]
+    cnames = ["Name", "Payment ID", "Telefon", "Kontakt", "Preis", "Zahlperiode", "Datum"]
     if not only_pending:
         cnames.append("Transaktions Details")
     printTable(data=payments, column_names=cnames)
@@ -234,7 +233,7 @@ def pay():
         details = input(f"Transaktionsdetails für PaymentID {id_}?: (Drücke nur ENTER zum Abbrechen)\n")
         if details == "":
             continue
-        cursor.execute("UPDATE payments SET status = 'PAID', transaction_details = ? WHERE id = ?", [details, id_])
+        cursor.execute("UPDATE payments SET status = 'PAID', transaction_details = ?, date = current_timestamp WHERE id = ?", [details, id_])
     connection.commit()
 
 

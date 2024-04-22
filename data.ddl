@@ -22,6 +22,7 @@ create table payments (
     amount float not null,
     status varchar(10) not null default 'PENDING',
     transaction_details varchar(64) null,
+    date timestamp default current_timestamp,
     check(status = 'PENDING' or status = 'PAID')
 );
 
