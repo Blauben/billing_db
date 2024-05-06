@@ -120,10 +120,7 @@ def printUsers():
     printTable(data=residentData, column_names=["Bewohnernummer", "Name", "Telefon", "Kontakt"])
 
 
-def registerBill():
-    printUsers()
-    index = input("\nBewohner Nummer eingeben: ")
-    amount = input("Betrag eingeben: ")
+def registerBill(index, amount):
     image = fetchImage()
     bill_id = addBill(index, amount)
     image.save(f"bills/{bill_id}.{image.format}")
@@ -216,18 +213,15 @@ def settleAccounts():
     finish_current_period()
 
 
-def pay():
+def pay(ids, details):
     if print_payments(only_pending=True) == 0:
         return
-    id_string = input("Payment ID?: ")
-    ids = id_string.split(" ")
-    for id_ in ids:
-        details = input(f"Transaktionsdetails für PaymentID {id_}?: (Drücke nur ENTER zum Abbrechen)\n")
-        if details == "":
-            continue
+    assert len(ids) == len(details)
+
+    for idx in range(len(ids)):
         cursor.execute(
             "UPDATE payments SET status = 'PAID', transaction_details = ?, date = current_timestamp WHERE id = ?",
-            [details, id_])
+            [details[idx], ids[idx]])
     connection.commit()
 
 

@@ -15,6 +15,11 @@ class Command(ABC):
     def execute_command(self):
         return
 
+    def help_arg_present(self):
+        if "help" in [k.replace("-", "").lower() for k in self.args]:
+            self.command_help()
+            return True
+
     @abstractmethod
     def command_help(self):
         return
@@ -27,6 +32,8 @@ class Exit(Command):
 
 class Help(Command):
     def execute_command(self):
+        if self.help_arg_present():
+            return
         help_str = """
         add_user - Fügt einen neuen Benutzer hinzu
         budget_pay - Zahle Bills mit Budget
@@ -54,8 +61,8 @@ class Help(Command):
 class AddUser(Command):
 
     def execute_command(self):
-        if "help" in [k.replace("-", "").lower() for k in self.args]:
-            return self.command_help()
+        if self.help_arg_present():
+            return
         if len(self.args) == 0:
             self.args.extend([input("Name: "), input("Telefon: "), input("Kontakt: ")])
         if len(self.args) == 3:
@@ -69,8 +76,8 @@ class AddUser(Command):
 
 class DeleteUser(Command):
     def execute_command(self):
-        if "help" in [k.replace("-", "").lower() for k in self.args]:
-            return self.command_help()
+        if self.help_arg_present():
+            return
         if len(self.args) == 0:
             connector.printUsers()
             uid = int(input("\nBewohner Nummer eingeben: "))
@@ -86,45 +93,103 @@ class DeleteUser(Command):
 
 class RegisterBill(Command):  # TODO continue here
     def execute_command(self):
-        connector.registerBill()
+        if self.help_arg_present():
+            return
+        if len(self.args) == 0:
+            connector.printUsers()
+            self.args.extend([input("\nBewohner Nummer eingeben: "), input("Betrag eingeben: ")])
+        if len(self.args) == 2:
+            connector.registerBill(*self.args)
+        else:
+            self.command_help()
+
+    def command_help(self):
+        print("register_bill - Usage: register_bill <UID> <Betrag>\n")
 
 
 class PrintPendingPayments(Command):
     def execute_command(self):
+        if self.help_arg_present():
+            return
         connector.print_payments(only_pending=True)
+
+    def command_help(self):
+        print("print_all_payments - Gebe alle unbezahlten Zahlungen aus. Keine Argumente notwendig.\n")
 
 
 class PrintAllPayments(Command):
     def execute_command(self):
+        if self.help_arg_present():
+            return
         connector.print_payments(only_pending=False)
 
+    def command_help(self):
+        print("print_all_payments - Gebe alle Zahlungen aus.")
 
-class SettleAccounts(Command):
+
+class SettleAccounts(Command):  # TODO refactor using Graph Theory!
     def execute_command(self):
+        if self.help_arg_present():
+            return
         connector.settleAccounts()
 
 
 class PrintAllBills(Command):
     def execute_command(self):
+        if self.help_arg_present():
+            return
         connector.print_bills(only_pending=False)
+
+    def command_help(self):
+        print("print_all_bills - Gebe alle Belege aus.")
 
 
 class PrintPendingBills(Command):
     def execute_command(self):
+        if self.help_arg_present():
+            return
         connector.print_bills(only_pending=True)
+
+    def command_help(self):
+        print("print_pending_bills - Gebe alle unbeglichenen Belege aus.")
 
 
 class PrintUsers(Command):
     def execute_command(self):
+        if self.help_arg_present():
+            return
         connector.printUsers()
+
+    def command_help(self):
+        print("print_users - Gibt alle rregistrierten User aus.\n")
 
 
 class Pay(Command):
     def execute_command(self):
-        connector.pay()
+        if self.help_arg_present():
+            return
+        if len(self.args) % 2 == 0:
+            ids = self.args[:len(self.args) / 2]
+            details = self.args[len(self.args) / 2:]
+            connector.pay(ids, details) if len(ids) == len(details) else print(
+                "Error: Unterschiedliche Anzahl an IDs und Details!")
+            return
+        ids = input("Payment ID? (Leerzeichen getrennte Liste erlaubt): ").split(" ")
+        details = []
+        for i in range(len(ids)):
+            detail = input(f"Transaktionsdetails für PaymentID {ids[i]}?: (Drücke nur ENTER zum Abbrechen)\n")
+            if detail == "":
+                ids.pop(i)
+            else:
+                details.append(detail)
+        connector.pay(ids, details)
+
+    def command_help(self):
+        print(
+            "pay - Usage: <ID_List> <Details_List>. Gleiche Anzahl von IDs und details gefordert, jeweils getrennt durch Leerzeichen.\n")
 
 
-class ChargeBudget(Command):
+class ChargeBudget(Command):  # TODO continue here
     def execute_command(self):
         connector.charge_budget()
 
