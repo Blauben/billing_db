@@ -1,4 +1,4 @@
-from controller import initDatabase, initFileStructure
+from connector import initDatabase, initFileStructure
 import console
 
 

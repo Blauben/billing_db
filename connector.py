@@ -74,11 +74,6 @@ def finish_current_period():
     connection.commit()
 
 
-def addResidentToDB(resident):
-    cursor.execute("INSERT INTO resident VALUES(NULL,?,?,?)", [resident.name, resident.phone, resident.contact])
-    connection.commit()
-
-
 def fetchImage():
     pictureFound = False
     imPath = ""
@@ -106,31 +101,27 @@ def addBill(rID, amount):
     return bill_id
 
 
-def addUser():
-    name = input("Name: ")
-    phone = input("Telefon: ")
-    contact = input("Kontakt: ")
-    addResidentToDB(Resident(-1, name, phone, contact))
+def addUser(name, phone, contact):
+    cursor.execute("INSERT INTO resident VALUES(NULL,?,?,?)", [name, phone, contact])
+    connection.commit()
     print("ERFOLGREICH\n")
 
 
-def deleteUser():
-    printResidents()
-    index = int(input("\nBewohner Nummer eingeben: "))
+def deleteUser(uid):
     cursor.execute(
         "DELETE FROM resident WHERE id=? AND NOT EXISTS (SELECT * FROM payments p WHERE p.status='PENDING' AND p.resident_id = ?);",
-        [index, index])
+        [uid, uid])
     connection.commit()
 
 
-def printResidents():
+def printUsers():
     residents = loadResidents()
     residentData = list(map(lambda r: r.tuple(), residents))
     printTable(data=residentData, column_names=["Bewohnernummer", "Name", "Telefon", "Kontakt"])
 
 
 def registerBill():
-    printResidents()
+    printUsers()
     index = input("\nBewohner Nummer eingeben: ")
     amount = input("Betrag eingeben: ")
     image = fetchImage()
@@ -158,7 +149,8 @@ def print_payments(only_pending):
     res = cursor.execute(query)
     payments = res.fetchall()
     if len(payments) == 0:
-        print("Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs Meeting!\n")
+        print(
+            "Keine Ausstehenden Zahlungen, bitte fügen Sie neue Belege hinzu und halten Sie ein Abrechnungs Meeting!\n")
         return 0
     cnames = ["Name", "Payment ID", "Telefon", "Kontakt", "Preis", "Zahlperiode", "Datum"]
     if not only_pending:
@@ -233,7 +225,9 @@ def pay():
         details = input(f"Transaktionsdetails für PaymentID {id_}?: (Drücke nur ENTER zum Abbrechen)\n")
         if details == "":
             continue
-        cursor.execute("UPDATE payments SET status = 'PAID', transaction_details = ?, date = current_timestamp WHERE id = ?", [details, id_])
+        cursor.execute(
+            "UPDATE payments SET status = 'PAID', transaction_details = ?, date = current_timestamp WHERE id = ?",
+            [details, id_])
     connection.commit()
 
 
@@ -287,6 +281,6 @@ def budget_pay():
 
 
 def round_half_up(n, decimals=2):
-    sign = abs(n)/n
+    sign = abs(n) / n
     multiplier = 10 ** decimals
     return math.floor(abs(n) * multiplier + 0.5) / multiplier * sign

@@ -1,61 +1,40 @@
-from controller import *
-
-
-def print_help():
-    help_str = """
-    add_user - Fügt einen neuen Benutzer hinzu
-    budget_pay - Zahle Bills mit Budget
-    charge_budget - Lädt Budget auf
-    delete_user - Löscht einen existierenden Benutzer (Es dürfen keine ausstehenden Zahlungen zu diesem Nutzer mehr bestehen!)
-    exit - Beende das Skript
-    pay - Zahle oder erhalte Geld
-    print_all_bills - Gebe alle Belege aus
-    print_all_payments - Gebe alle Zahlungen aus
-    print_budget - Gebe Budget aus
-    print_pending_bills - Gebe alle unbeglichenen Belege aus
-    print_pending_payments - Gebe alle austehenden Zahlungen aus
-    print_users - Gebe alle Benutzer aus
-    register_bill - Fügt einen neuen Beleg hinzu
-    settle_accounts - Berechne Ausgleichszahlungen
-    
-    Kurzformen (Anfangsbuchstaben) sind erlaubt.
-    """
-    print(help_str)
+from commands import *
 
 
 def run():
-    print_help()
+    Help().execute_command()
     while True:
-        command = input("> ")
-        if "exit" == command:
-            break
-        elif "help" == command:
-            print_help()
-        elif "add_user" == command or "au" == command:
-            addUser()
-        elif "delete_user" == command or "du" == command:
-            deleteUser()
-        elif "register_bill" == command or "rb" == command:
-            registerBill()
-        elif "print_pending_payments" == command or "ppp" == command:
-            print_payments(only_pending=True)
-        elif "print_all_payments" == command or "pap" == command:
-            print_payments(only_pending=False)
-        elif "settle_accounts" == command or "sa" == command:
-            settleAccounts()
-        elif "print_all_bills" == command or "pab" == command:
-            print_bills(only_pending=False)
-        elif "print_pending_bills" == command or "ppb" == command:
-            print_bills(only_pending=True)
-        elif "print_users" == command or "pu" == command:
-            printResidents()
-        elif "pay" == command or "p" == command:
-            pay()
-        elif "charge_budget" == command or "cb" == command:
-            charge_budget()
-        elif "print_budget" == command or "pb" == command:
-            print_budget()
-        elif "budget_pay" == command or "bp" == command:
-            budget_pay()
+        command = input("> ").split(" ")
+        args = command[1:] if len(command) > 0 else []
+        if "exit" == command[0]:
+            Exit(args).execute_command()
+        elif "help" == command[0]:
+            Help(args).execute_command()
+        elif "add_user" == command or "au" == command[0]:
+            AddUser(args).execute_command()
+        elif "delete_user" == command or "du" == command[0]:
+            DeleteUser(args).execute_command()
+        elif "register_bill" == command or "rb" == command[0]:
+            RegisterBill(args).execute_command()
+        elif "print_pending_payments" == command or "ppp" == command[0]:
+            PrintPendingPayments(args).execute_command()
+        elif "print_all_payments" == command or "pap" == command[0]:
+            PrintAllPayments(args).execute_command()
+        elif "settle_accounts" == command or "sa" == command[0]:
+            SettleAccounts(args).execute_command()
+        elif "print_all_bills" == command or "pab" == command[0]:
+            PrintAllBills(args).execute_command()
+        elif "print_pending_bills" == command or "ppb" == command[0]:
+            PrintPendingBills(args).execute_command()
+        elif "print_users" == command or "pu" == command[0]:
+            PrintUsers(args).execute_command()
+        elif "pay" == command or "p" == command[0]:
+            Pay(args).execute_command()
+        elif "charge_budget" == command or "cb" == command[0]:
+            ChargeBudget(args).execute_command()
+        elif "print_budget" == command or "pb" == command[0]:
+            PrintBudget(args).execute_command()
+        elif "budget_pay" == command or "bp" == command[0]:
+            BudgetPay(args).execute_command()
         else:
             print(f"Unbekannter Befehl \"{command}\". Geben Sie \"help\" für eine Liste von Befehlen ein.\n")
