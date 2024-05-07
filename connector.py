@@ -225,8 +225,7 @@ def pay(ids, details):
     connection.commit()
 
 
-def charge_budget():
-    charge = float(input("Budget Aufladung?: "))
+def charge_budget(charge):
     print("\n")
     residents = loadResidents()
     res = cursor.execute("SELECT balance FROM budget")

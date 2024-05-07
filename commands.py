@@ -91,7 +91,7 @@ class DeleteUser(Command):
         print("delete_user - Usage: delete_user <UID>\n")
 
 
-class RegisterBill(Command):  # TODO continue here
+class RegisterBill(Command):
     def execute_command(self):
         if self.help_arg_present():
             return
@@ -189,16 +189,37 @@ class Pay(Command):
             "pay - Usage: <ID_List> <Details_List>. Gleiche Anzahl von IDs und details gefordert, jeweils getrennt durch Leerzeichen.\n")
 
 
-class ChargeBudget(Command):  # TODO continue here
+class ChargeBudget(Command):
     def execute_command(self):
-        connector.charge_budget()
+        if self.help_arg_present():
+            return
+        if len(self.args) == 0:
+            self.args.append(float(input("Budget Aufladung?: ")))
+        if len(self.args) == 1:
+            connector.charge_budget(*self.args)
+        else:
+            self.command_help()
+
+    def command_help(self):
+        print("charge_budget - Usage: charge_budget <Amount> . Lädt das Budget um <Amount> Euro.\n")
 
 
 class PrintBudget(Command):
     def execute_command(self):
+        if self.help_arg_present():
+            return
         connector.print_budget()
+
+    def command_help(self):
+        print("print_budget - Gibt das aktuelle Budget aus.")
 
 
 class BudgetPay(Command):
     def execute_command(self):
-        connector.pay()
+        if self.help_arg_present():
+            return
+        connector.budget_pay()
+
+    def command_help(self):
+        print(
+            "budget_pay - Begleicht alle möglichen Belege mit dem aktuellen Budget und fügt sie als Zahlungen hinzu.\n")
